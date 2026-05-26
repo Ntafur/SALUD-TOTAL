@@ -3726,10 +3726,13 @@ document.getElementById('btnFillNullsMode').addEventListener('click', fillNullsW
 
 // Descarga todos los archivos en un único 7z, conservando el nombre original
 // (sin sufijo _corregido). Cada RIPS queda contenido dentro de una carpeta cuyo
-// nombre sigue la estructura "{numDocumentoIdObligado}_{numFactura}" (p. ej.
-// "860035992_11332233"). Usa 7z-wasm (7-Zip 24.09 compilado a WebAssembly) para
-// generar un archivo .7z real con compresión LZMA2, evitando que el navegador
-// marque los JSON descomprimidos como sospechosos.
+// nombre sigue la estructura "860035992_{numFactura}" (p. ej.
+// "860035992_11332233"). El prefijo "860035992" es una CONSTANTE fija del
+// editor (NIT de SALUD TOTAL), no se deriva de cada JSON. Usa 7z-wasm (7-Zip
+// 24.09 compilado a WebAssembly) para generar un archivo .7z real con
+// compresión LZMA2, evitando que el navegador marque los JSON descomprimidos
+// como sospechosos.
+const SALUD_TOTAL_FOLDER_PREFIX = '860035992';
 //
 // La librería WASM se carga la primera vez que se usa y se cachea para
 // reutilizar en descargas posteriores. Si la red bloquea el CDN, se notifica
@@ -3802,15 +3805,14 @@ async function downloadAllAs7z() {
       let nombre = f.name.endsWith('.json') ? f.name : `${f.name}.json`;
       nombre = nombre.replace(/[\/\\:*?"<>|]+/g, '_') || 'archivo.json';
 
-      // Carpeta contenedora: "{numDocumentoIdObligado}_{numFactura}".
-      // Si alguno de los dos no está disponible (caso raro), se usa el nombre
-      // base del archivo como fallback determinista.
+      // Carpeta contenedora: "860035992_{numFactura}" (prefijo fijo).
+      // Si numFactura no está disponible (caso raro), se usa el nombre base
+      // del archivo como fallback determinista.
       const sanitize = s => String(s).replace(/[\/\\:*?"<>|\s]+/g, '_');
-      const nit = sanitize(f.raw?.numDocumentoIdObligado || '').trim();
       const numFact = sanitize(resolveFileNumFactura(f) || '').trim();
       let folder;
-      if (nit && numFact) {
-        folder = `${nit}_${numFact}`;
+      if (numFact) {
+        folder = `${SALUD_TOTAL_FOLDER_PREFIX}_${numFact}`;
       } else {
         folder = nombre.replace(/\.json$/i, '') || 'archivo';
       }
