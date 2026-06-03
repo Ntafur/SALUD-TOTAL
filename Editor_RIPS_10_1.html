@@ -320,6 +320,47 @@
     flex-wrap: wrap;
     align-items: center;
   }
+
+  /* Casilla de selección por archivo (enlaza con "Descargar todos (7z)") */
+  .file-item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .file-item-body { flex: 1; min-width: 0; }
+  .file-item-check {
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: var(--brand-red);
+  }
+
+  /* Barra de filtros de selección: "Seleccionar todos" / "Seleccionar modificados" */
+  .file-select-toolbar {
+    display: flex;
+    gap: 6px;
+    padding: 0 14px 8px;
+  }
+  .file-filter-btn {
+    flex: 1;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 6px 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text2);
+    cursor: pointer;
+    transition: background .12s, border-color .12s, color .12s;
+    white-space: nowrap;
+  }
+  .file-filter-btn:hover {
+    background: rgba(228, 0, 70, 0.10);
+    border-color: rgba(228, 0, 70, 0.30);
+    color: var(--brand-red);
+  }
   .badge {
     font-size: 10px;
     font-weight: 700;
@@ -1879,6 +1920,22 @@
   header #btnFillNullsMode { background: rgba(228, 0, 70, 0.18) !important; color: #FFFFFF !important; border-color: rgba(228, 0, 70, 0.60) !important; }
   header #btnFillNullsMode:hover { background: var(--brand-red) !important; border-color: var(--brand-red) !important; }
 
+  /* "NA" — genera nota crédito (numNota/tipoNota) solo en archivos modificados: ROJO OUTLINE */
+  #btnFillNotaCreditoNA {
+    background: rgba(228, 0, 70, 0.10) !important;
+    color: var(--brand-red) !important;
+    border: 1px solid rgba(228, 0, 70, 0.30) !important;
+    font-weight: 700 !important;
+    letter-spacing: .04em;
+  }
+  #btnFillNotaCreditoNA:hover:not(:disabled) {
+    background: var(--brand-red) !important;
+    color: #FFFFFF !important;
+    border-color: var(--brand-red) !important;
+  }
+  header #btnFillNotaCreditoNA { background: rgba(228, 0, 70, 0.18) !important; color: #FFFFFF !important; border-color: rgba(228, 0, 70, 0.60) !important; }
+  header #btnFillNotaCreditoNA:hover:not(:disabled) { background: var(--brand-red) !important; border-color: var(--brand-red) !important; }
+
   /* "Cargue masivo" — bombillo (CSV mass upload): AMARILLO/DORADO destacado */
   #btnBulkAuthCsv {
     background: rgba(251, 191, 36, 0.16) !important;
@@ -2415,6 +2472,10 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
       Autocompletar nulls
     </button>
+    <button class="btn btn-sm" id="btnFillNotaCreditoNA" disabled title="Solo en archivos MODIFICADOS: numNota toma el valor de numFactura y tipoNota = 'NA'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+      NA
+    </button>
     <button class="btn btn-sm" id="btnBulkAuthCsv" disabled title="Cargue masivo de autorizaciones desde CSV (B)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.4 1 1 1 1.7v.6h6v-.6c0-.7.4-1.3 1-1.7A7 7 0 0 0 12 2z"/></svg>
       Cargue masivo
@@ -2618,6 +2679,10 @@
     <div class="sidebar-header">
       <span>Archivos cargados</span>
       <span class="count" id="sidebarCount">0</span>
+    </div>
+    <div class="file-select-toolbar" id="fileSelectToolbar" style="display:none">
+      <button class="file-filter-btn" id="btnSelectAllFiles" title="Marca la casilla de todos los archivos cargados">☑ Seleccionar todos</button>
+      <button class="file-filter-btn" id="btnSelectModifiedFiles" title="Marca solo los archivos con estado Modificado">● Seleccionar modificados</button>
     </div>
     <div class="file-list" id="fileList"></div>
 
@@ -2859,7 +2924,7 @@ function loadFile(file) {
       const key = file.name;
       const medNorm = normalizeMedicamentoCodes(raw);
       const rows = buildRows(raw);
-      state.files[key] = { raw, rows, modified: medNorm > 0, name: file.name };
+      state.files[key] = { raw, rows, modified: medNorm > 0, name: file.name, selected: true };
       if (!state.activeFile) state.activeFile = key;
       renderSidebar();
       renderMain();
@@ -2883,20 +2948,41 @@ function renderSidebar() {
 
   if (keys.length === 0) {
     list.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center">Sin archivos</div>';
+    const toolbar = document.getElementById('fileSelectToolbar');
+    if (toolbar) toolbar.style.display = 'none';
+    const naBtn = document.getElementById('btnFillNotaCreditoNA');
+    if (naBtn) naBtn.disabled = true;
+    updateExportAllButton();
     return;
   }
 
   keys.forEach(key => {
     const f = state.files[key];
+    // Por defecto los archivos quedan seleccionados (incluidos en "Descargar todos").
+    if (f.selected === undefined) f.selected = true;
     const item = document.createElement('div');
     item.className = 'file-item' + (state.activeFile === key ? ' active' : '');
     item.innerHTML = `
-      <div class="file-item-name">${f.name}</div>
-      <div class="file-item-meta">
-        <span>${f.rows.length} reg.</span>
-        ${f.modified ? '<span class="badge badge-modified">● Modificado</span>' : '<span class="badge">Sin cambios</span>'}
+      <div class="file-item-row">
+        <input type="checkbox" class="file-item-check" ${f.selected ? 'checked' : ''} title="Incluir este archivo en 'Descargar todos (7z)'">
+        <div class="file-item-body">
+          <div class="file-item-name">${f.name}</div>
+          <div class="file-item-meta">
+            <span>${f.rows.length} reg.</span>
+            ${f.modified ? '<span class="badge badge-modified">● Modificado</span>' : '<span class="badge">Sin cambios</span>'}
+          </div>
+        </div>
       </div>
     `;
+    // La casilla solo alterna la selección; no debe cambiar el archivo activo.
+    const cb = item.querySelector('.file-item-check');
+    if (cb) {
+      cb.addEventListener('click', e => e.stopPropagation());
+      cb.addEventListener('change', e => {
+        f.selected = e.target.checked;
+        updateExportAllButton();
+      });
+    }
     item.addEventListener('click', () => {
       state.activeFile = key;
       state.editingRow = null;
@@ -2909,11 +2995,56 @@ function renderSidebar() {
 
   // Habilitar botones si hay archivos cargados
   const hasFiles = !!Object.keys(state.files).length;
-  document.getElementById('btnExportAll').disabled = !hasFiles;
   document.getElementById('btnExportNullsCsv').disabled = !hasFiles;
   document.getElementById('btnFillNullsMode').disabled = !hasFiles;
   const baBtn = document.getElementById('btnBulkAuthCsv');
   if (baBtn) baBtn.disabled = !hasFiles;
+  // Mostrar la barra de filtros de selección solo cuando hay archivos
+  const toolbar = document.getElementById('fileSelectToolbar');
+  if (toolbar) toolbar.style.display = hasFiles ? 'flex' : 'none';
+  // Botón "NA": habilitado solo si hay al menos un archivo modificado
+  const naBtn = document.getElementById('btnFillNotaCreditoNA');
+  if (naBtn) naBtn.disabled = !Object.values(state.files).some(f => f.modified);
+  updateExportAllButton();
+}
+
+// Habilita/inhabilita "Descargar todos (7z)" según la cantidad de archivos
+// con la casilla marcada y refleja el conteo en el texto del botón.
+function updateExportAllButton() {
+  const btn = document.getElementById('btnExportAll');
+  if (!btn) return;
+  const selCount = Object.values(state.files).filter(f => f.selected !== false).length;
+  btn.disabled = selCount === 0;
+  let label = btn.querySelector('.export-all-count');
+  if (!label) {
+    label = document.createElement('span');
+    label.className = 'export-all-count';
+    label.style.marginLeft = '4px';
+    btn.appendChild(label);
+  }
+  label.textContent = selCount > 0 ? `(${selCount})` : '';
+}
+
+// Filtros de selección de la barra lateral
+function setAllFilesSelected(value) {
+  Object.values(state.files).forEach(f => { f.selected = value; });
+  renderSidebar();
+}
+function selectOnlyModifiedFiles() {
+  const keys = Object.keys(state.files);
+  if (!keys.length) return;
+  let modCount = 0;
+  keys.forEach(k => {
+    const f = state.files[k];
+    f.selected = !!f.modified;
+    if (f.modified) modCount++;
+  });
+  renderSidebar();
+  if (modCount === 0) {
+    toast('No hay archivos modificados para seleccionar', 'warn');
+  } else {
+    toast(`☑ ${modCount} archivo${modCount !== 1 ? 's' : ''} modificado${modCount !== 1 ? 's' : ''} seleccionado${modCount !== 1 ? 's' : ''}`);
+  }
 }
 
 // Tabla principal
@@ -3724,6 +3855,76 @@ function fillNullsWithMode() {
 
 document.getElementById('btnFillNullsMode').addEventListener('click', fillNullsWithMode);
 
+// Genera la nota crédito ("NA") SOLO en los archivos con estado Modificado:
+//   - numNota: null  ->  numNota = valor de numFactura (p. ej. "11323405")
+//   - tipoNota: null ->  tipoNota = "NA" (constante)
+// Los archivos sin cambios se omiten por completo. Solo se reemplazan los
+// campos que están en null/vacío para no pisar valores ya existentes.
+function fillNotaCreditoNA() {
+  const keys = Object.keys(state.files);
+  if (!keys.length) {
+    toast('No hay archivos cargados', 'warn');
+    return;
+  }
+
+  let filesAffected = 0;
+  let filesSkipped = 0;
+  const summary = [];
+
+  keys.forEach(key => {
+    const f = state.files[key];
+    if (!f || !f.raw) return;
+
+    // Solo archivos modificados; los demás se omiten.
+    if (!f.modified) {
+      filesSkipped++;
+      return;
+    }
+
+    const numFactura = resolveFileNumFactura(f);
+    const changes = [];
+
+    // numNota: null/vacío -> valor de numFactura
+    if ((f.raw.numNota === null || f.raw.numNota === undefined || f.raw.numNota === '') && numFactura) {
+      f.raw.numNota = String(numFactura);
+      changes.push(`numNota="${f.raw.numNota}"`);
+    }
+
+    // tipoNota: null/vacío -> constante "NA"
+    if (f.raw.tipoNota === null || f.raw.tipoNota === undefined || f.raw.tipoNota === '') {
+      f.raw.tipoNota = 'NA';
+      changes.push('tipoNota="NA"');
+    }
+
+    if (changes.length) {
+      filesAffected++;
+      summary.push(`• ${f.name}: ${changes.join(', ')}`);
+    }
+  });
+
+  renderSidebar();
+  renderMain();
+
+  if (filesAffected === 0) {
+    if (filesSkipped > 0) {
+      toast('Ningún archivo modificado requería ajuste de nota crédito (numNota/tipoNota ya tenían valor)', 'warn');
+    } else {
+      toast('No hay archivos modificados para aplicar la nota crédito', 'warn');
+    }
+    return;
+  }
+
+  console.log('Nota crédito NA - resumen:\n' + summary.join('\n'));
+  const skipMsg = filesSkipped > 0 ? ` · ${filesSkipped} sin cambios omitido${filesSkipped !== 1 ? 's' : ''}` : '';
+  toast(`✓ Nota crédito aplicada en ${filesAffected} archivo${filesAffected !== 1 ? 's' : ''} modificado${filesAffected !== 1 ? 's' : ''}${skipMsg}`);
+}
+
+document.getElementById('btnFillNotaCreditoNA').addEventListener('click', fillNotaCreditoNA);
+
+// Filtros de selección de la barra lateral
+document.getElementById('btnSelectAllFiles').addEventListener('click', () => setAllFilesSelected(true));
+document.getElementById('btnSelectModifiedFiles').addEventListener('click', selectOnlyModifiedFiles);
+
 // Descarga todos los archivos en un único 7z, conservando el nombre original
 // (sin sufijo _corregido). Cada RIPS queda contenido dentro de una carpeta cuyo
 // nombre sigue la estructura "860035992_{numFactura}" (p. ej.
@@ -3767,9 +3968,15 @@ async function get7zInstance() {
 }
 
 async function downloadAllAs7z() {
-  const keys = Object.keys(state.files);
-  if (!keys.length) {
+  const allKeys = Object.keys(state.files);
+  if (!allKeys.length) {
     toast('No hay archivos para descargar', 'warn');
+    return;
+  }
+  // Solo se incluyen los archivos con la casilla marcada en la barra lateral.
+  const keys = allKeys.filter(k => state.files[k] && state.files[k].selected !== false);
+  if (!keys.length) {
+    toast('No hay archivos seleccionados. Marca al menos una casilla.', 'warn');
     return;
   }
 
