@@ -1,0 +1,102 @@
+{
+  "numDocumentoIdObligado": "860035992",
+  "numFactura": "11323407",
+  "tipoNota": null,
+  "numNota": null,
+  "usuarios": [
+    {
+      "tipoDocumentoIdentificacion": "CC",
+      "numDocumentoIdentificacion": "1020304050",
+      "tipoUsuario": "01",
+      "fechaNacimiento": "1980-05-20",
+      "codSexo": "M",
+      "codPaisResidencia": "170",
+      "codMunicipioResidencia": "05001",
+      "codZonaTerritorialResidencia": "02",
+      "incapacidad": "NO",
+      "consecutivo": 1,
+      "codPaisOrigen": "170",
+      "servicios": {
+        "consultas": [
+          {
+            "codPrestador": "050010289101",
+            "fechaInicioAtencion": "2025-01-15 08:30",
+            "numAutorizacion": "00565-2628909635",
+            "codConsulta": "890201",
+            "modalidadGrupoServicioTecSal": "01",
+            "grupoServicios": "01",
+            "codServicio": 334,
+            "finalidadTecnologiaSalud": "15",
+            "causaMotivoAtencion": "38",
+            "codDiagnosticoPrincipal": "I10X",
+            "codDiagnosticoRelacionado1": null,
+            "codDiagnosticoRelacionado2": null,
+            "codDiagnosticoRelacionado3": null,
+            "tipoDiagnosticoPrincipal": "02",
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "1020304050",
+            "vrServicio": 45000,
+            "conceptoRecaudo": "05",
+            "valorPagoModerador": 0,
+            "numFEVPagoModerador": null,
+            "consecutivo": 1
+          },
+          {
+            "codPrestador": "050010289101",
+            "fechaInicioAtencion": "2025-01-15 08:30",
+            "numAutorizacion": "00565-2628909635",
+            "codConsulta": "890201",
+            "modalidadGrupoServicioTecSal": "01",
+            "grupoServicios": "01",
+            "codServicio": 334,
+            "finalidadTecnologiaSalud": "15",
+            "causaMotivoAtencion": "38",
+            "codDiagnosticoPrincipal": "I10X",
+            "codDiagnosticoRelacionado1": null,
+            "codDiagnosticoRelacionado2": null,
+            "codDiagnosticoRelacionado3": null,
+            "tipoDiagnosticoPrincipal": "02",
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "1020304050",
+            "vrServicio": 45000,
+            "conceptoRecaudo": "05",
+            "valorPagoModerador": 0,
+            "numFEVPagoModerador": null,
+            "consecutivo": 2
+          }
+        ],
+        "medicamentos": [
+          {
+            "codPrestador": "050010289101",
+            "numAutorizacion": "00565-2628909635",
+            "idMIPRES": null,
+            "fechaDispensAdmon": "2025-01-15 09:00",
+            "codDiagnosticoPrincipal": "I10X",
+            "codDiagnosticoRelacionado": null,
+            "tipoMedicamento": "01",
+            "codTecnologiaSalud": "20154146-8",
+            "nomTecnologiaSalud": "LOSARTAN 50MG TABLETA",
+            "concentracionMedicamento": "50",
+            "unidadMedida": "1",
+            "formaFarmaceutica": "TABLETA",
+            "unidadMinDispensa": "1",
+            "cantidadMedicamento": 30,
+            "diasTratamiento": 30,
+            "tipoDocumentoIdentificacion": "CC",
+            "numDocumentoIdentificacion": "1020304050",
+            "vrUnitMedicamento": 500,
+            "vrServicio": 15000,
+            "conceptoRecaudo": "05",
+            "valorPagoModerador": 0,
+            "numFEVPagoModerador": null,
+            "consecutivo": 3
+          }
+        ],
+        "procedimientos": [],
+        "urgencias": [],
+        "hospitalizacion": [],
+        "otrosServicios": []
+      }
+    }
+  ]
+}
