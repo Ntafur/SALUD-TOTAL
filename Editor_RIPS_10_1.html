@@ -3868,7 +3868,8 @@ function fillNotaCreditoNA() {
   }
 
   let filesAffected = 0;
-  let filesSkipped = 0;
+  let skippedNotModified = 0;   // omitidos por estar "Sin cambios"
+  let skippedAlreadyFilled = 0; // modificados, pero numNota/tipoNota ya tenían valor
   const summary = [];
 
   keys.forEach(key => {
@@ -3877,7 +3878,7 @@ function fillNotaCreditoNA() {
 
     // Solo archivos modificados; los demás se omiten.
     if (!f.modified) {
-      filesSkipped++;
+      skippedNotModified++;
       return;
     }
 
@@ -3899,6 +3900,9 @@ function fillNotaCreditoNA() {
     if (changes.length) {
       filesAffected++;
       summary.push(`• ${f.name}: ${changes.join(', ')}`);
+    } else {
+      // Archivo modificado pero numNota/tipoNota ya tenían valor: no se pisa.
+      skippedAlreadyFilled++;
     }
   });
 
@@ -3906,16 +3910,16 @@ function fillNotaCreditoNA() {
   renderMain();
 
   if (filesAffected === 0) {
-    if (filesSkipped > 0) {
-      toast('Ningún archivo modificado requería ajuste de nota crédito (numNota/tipoNota ya tenían valor)', 'warn');
+    if (skippedAlreadyFilled > 0) {
+      toast(`Sin cambios: ${skippedAlreadyFilled} archivo${skippedAlreadyFilled !== 1 ? 's' : ''} modificado${skippedAlreadyFilled !== 1 ? 's' : ''} ya tenía${skippedAlreadyFilled !== 1 ? 'n' : ''} numNota/tipoNota con valor`, 'warn');
     } else {
-      toast('No hay archivos modificados para aplicar la nota crédito', 'warn');
+      toast('No hay archivos modificados para aplicar la nota crédito (marca un archivo como modificado primero)', 'warn');
     }
     return;
   }
 
   console.log('Nota crédito NA - resumen:\n' + summary.join('\n'));
-  const skipMsg = filesSkipped > 0 ? ` · ${filesSkipped} sin cambios omitido${filesSkipped !== 1 ? 's' : ''}` : '';
+  const skipMsg = skippedNotModified > 0 ? ` · ${skippedNotModified} sin cambios omitido${skippedNotModified !== 1 ? 's' : ''}` : '';
   toast(`✓ Nota crédito aplicada en ${filesAffected} archivo${filesAffected !== 1 ? 's' : ''} modificado${filesAffected !== 1 ? 's' : ''}${skipMsg}`);
 }
 
